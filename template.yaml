@@ -1,0 +1,130 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: VPC Management API - Allianz Challenge
+
+Globals:
+  Function:
+    Runtime: python3.12
+    Timeout: 30
+    MemorySize: 128
+    Environment:
+      Variables:
+        TABLE_NAME: !Ref VpcTable
+
+Resources:
+
+  # ---- Cognito (Auth) ----
+  UserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName: vpc-api-users
+      AutoVerifiedAttributes:
+        - email
+      UsernameAttributes:
+        - email
+      Policies:
+        PasswordPolicy:
+          MinimumLength: 8
+
+  UserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      ClientName: vpc-api-client
+      UserPoolId: !Ref UserPool
+      ExplicitAuthFlows:
+        - ALLOW_USER_PASSWORD_AUTH
+        - ALLOW_REFRESH_TOKEN_AUTH
+      GenerateSecret: false
+
+  # ---- API Gateway ----
+  VpcApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      Name: vpc-api
+      StageName: prod
+      Auth:
+        DefaultAuthorizer: CognitoAuth
+        Authorizers:
+          CognitoAuth:
+            UserPoolArn: !GetAtt UserPool.Arn
+
+  # ---- DynamoDB ----
+  VpcTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: vpcs
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: vpc_id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: vpc_id
+          KeyType: HASH
+
+  # ---- Lambda Functions ----
+  CreateVpcFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: create-vpc
+      Handler: create_vpc.lambda_handler
+      CodeUri: src/create/
+      Policies:
+        - AmazonEC2FullAccess
+        - AmazonDynamoDBFullAccess
+      Events:
+        CreateVpc:
+          Type: Api
+          Properties:
+            RestApiId: !Ref VpcApi
+            Path: /vpcs
+            Method: POST
+
+  GetVpcsFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: get-vpcs
+      Handler: get_vpcs.lambda_handler
+      CodeUri: src/get/
+      Policies:
+        - AmazonDynamoDBReadOnlyAccess
+      Events:
+        ListVpcs:
+          Type: Api
+          Properties:
+            RestApiId: !Ref VpcApi
+            Path: /vpcs
+            Method: GET
+        GetVpc:
+          Type: Api
+          Properties:
+            RestApiId: !Ref VpcApi
+            Path: /vpcs/{vpc_id}
+            Method: GET
+
+  DeleteVpcFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: delete-vpc
+      Handler: delete_vpc.lambda_handler
+      CodeUri: src/delete/
+      Policies:
+        - AmazonEC2FullAccess
+        - AmazonDynamoDBFullAccess
+      Events:
+        DeleteVpc:
+          Type: Api
+          Properties:
+            RestApiId: !Ref VpcApi
+            Path: /vpcs/{vpc_id}
+            Method: DELETE
+
+Outputs:
+  ApiUrl:
+    Description: API Gateway URL
+    Value: !Sub "https://${VpcApi}.execute-api.${AWS::Region}.amazonaws.com/prod"
+  UserPoolId:
+    Description: Cognito User Pool ID
+    Value: !Ref UserPool
+  UserPoolClientId:
+    Description: Cognito App Client ID
+    Value: !Ref UserPoolClient
