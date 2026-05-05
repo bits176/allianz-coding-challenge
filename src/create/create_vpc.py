@@ -109,7 +109,7 @@ def validate_cidr(cidr):
     try:
         ipaddress.ip_network(cidr, strict=False)
         return True
-    except ValueError:
+    except (ValueError, TypeError):
         return False
 
 
