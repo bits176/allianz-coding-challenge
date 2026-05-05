@@ -1,4 +1,29 @@
+# Terraform
+terraform/.terraform/
+terraform/.build/
+terraform/*.tfstate
+terraform/*.tfstate.backup
+terraform/.terraform.lock.hcl
+terraform/state-backend/.terraform/
+terraform/state-backend/*.tfstate
+terraform/state-backend/*.tfstate.backup
+terraform/state-backend/.terraform.lock.hcl
+
+# SAM (legacy)
 .aws-sam/
+
+# Python
 __pycache__/
 *.pyc
+.pytest_cache/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# OS
+.DS_Store
+
+# Misc
 architecture.excalidraw
