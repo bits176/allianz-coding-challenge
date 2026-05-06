@@ -9,6 +9,17 @@ resource "aws_dynamodb_table" "vpcs" {
     type = "S"
   }
 
+  attribute {
+    name = "idempotency_key"
+    type = "S"
+  }
+
+  global_secondary_index {
+    name            = "idempotency-index"
+    hash_key        = "idempotency_key"
+    projection_type = "ALL"
+  }
+
   point_in_time_recovery {
     enabled = true
   }

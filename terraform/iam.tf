@@ -31,11 +31,15 @@ resource "aws_iam_policy" "dynamodb_access" {
       Action = [
         "dynamodb:PutItem",
         "dynamodb:GetItem",
+        "dynamodb:Query",
         "dynamodb:Scan",
         "dynamodb:UpdateItem",
         "dynamodb:DeleteItem",
       ]
-      Resource = aws_dynamodb_table.vpcs.arn
+      Resource = [
+        aws_dynamodb_table.vpcs.arn,
+        "${aws_dynamodb_table.vpcs.arn}/index/*",
+      ]
     }]
   })
 }

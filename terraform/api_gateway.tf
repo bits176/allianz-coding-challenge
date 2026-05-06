@@ -2,6 +2,21 @@
 resource "aws_api_gateway_rest_api" "main" {
   name        = "${var.project_name}-${var.environment}"
   description = "VPC Management API"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect    = "Allow"
+      Principal = "*"
+      Action    = "execute-api:Invoke"
+      Resource  = "arn:aws:execute-api:${var.aws_region}:*:*/*/*/*"
+      Condition = {
+        IpAddress = {
+          "aws:SourceIp" = [var.allowed_cidr]
+        }
+      }
+    }]
+  })
 }
 
 # /vpcs resource
@@ -103,9 +118,10 @@ resource "aws_api_gateway_integration" "delete_vpc" {
 resource "aws_api_gateway_deployment" "main" {
   rest_api_id = aws_api_gateway_rest_api.main.id
 
-  # Redeploy when any method/integration changes
+  # Redeploy when any method/integration/policy changes
   triggers = {
     redeployment = sha1(jsonencode([
+      aws_api_gateway_rest_api.main.policy,
       aws_api_gateway_method.create_vpc,
       aws_api_gateway_integration.create_vpc,
       aws_api_gateway_method.list_vpcs,

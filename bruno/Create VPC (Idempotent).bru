@@ -1,0 +1,36 @@
+meta {
+  name: Create VPC (Idempotent)
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{base_url}}
+  body: json
+  auth: none
+}
+
+headers {
+  Authorization: {{token}}
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "name": "my-vpc",
+    "cidr_block": "10.0.0.0/16",
+    "idempotency_key": "unique-request-123",
+    "subnets": [
+      {
+        "name": "private-1a",
+        "cidr_block": "10.0.1.0/24",
+        "az": "eu-central-1a"
+      },
+      {
+        "name": "public-1b",
+        "cidr_block": "10.0.2.0/24",
+        "az": "eu-central-1b"
+      }
+    ]
+  }
+}

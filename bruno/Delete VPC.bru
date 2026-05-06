@@ -1,0 +1,19 @@
+meta {
+  name: Delete VPC
+  type: http
+  seq: 5
+}
+
+delete {
+  url: {{base_url}}/:vpc_id
+  body: none
+  auth: none
+}
+
+params:path {
+  vpc_id: vpc-xxxxxxxxxxxxx
+}
+
+headers {
+  Authorization: {{token}}
+}

@@ -12,14 +12,14 @@ terraform {
     }
   }
 
-  # Remote state — uncomment after running terraform/state-backend/ first
-  # backend "s3" {
-  #   bucket         = "vpc-api-terraform-state"
-  #   key            = "vpc-api/terraform.tfstate"
-  #   region         = "eu-central-1"
-  #   dynamodb_table = "vpc-api-terraform-locks"
-  #   encrypt        = true
-  # }
+  # Remote state — requires terraform/state-backend/ to be applied first
+  backend "s3" {
+    bucket       = "vpc-api-terraform-state"
+    key          = "vpc-api/terraform.tfstate"
+    region       = "eu-central-1"
+    encrypt      = true
+    use_lockfile = true
+  }
 }
 
 provider "aws" {
