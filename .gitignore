@@ -1,4 +1,22 @@
-.aws-sam/
+# Terraform
+terraform/.terraform/
+terraform/.build/
+terraform/*.tfstate
+terraform/*.tfstate.backup
+terraform/state-backend/.terraform/
+terraform/state-backend/*.tfstate
+terraform/state-backend/*.tfstate.backup
+
+# Python
 __pycache__/
 *.pyc
-architecture.excalidraw
+.pytest_cache/
+.venv/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# OS
+.DS_Store

@@ -4,7 +4,7 @@ import boto3
 import json
 import logging
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -45,14 +45,13 @@ def lambda_handler(event, context):
         logger.info(f"Deleted VPC: {vpc_id}")
 
         # Soft delete — mark as DELETED, keep the record for audit trail
-        # "status" is a DynamoDB reserved word, so we alias it with #s
         table.update_item(
             Key={"vpc_id": vpc_id},
             UpdateExpression="SET #s = :status, deleted_at = :deleted_at",
             ExpressionAttributeNames={"#s": "status"},
             ExpressionAttributeValues={
                 ":status": "DELETED",
-                ":deleted_at": datetime.utcnow().isoformat() + "Z"
+                ":deleted_at": datetime.now(timezone.utc).isoformat()
             }
         )
 

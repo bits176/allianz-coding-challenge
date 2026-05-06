@@ -4,6 +4,7 @@ import boto3
 import json
 import logging
 import os
+from decimal import Decimal
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -14,11 +15,18 @@ dynamodb = boto3.resource("dynamodb")
 table = dynamodb.Table(TABLE_NAME)
 
 
+class DecimalEncoder(json.JSONEncoder):
+    """Handle DynamoDB Decimal types in JSON serialization."""
+    def default(self, obj):
+        if isinstance(obj, Decimal):
+            return int(obj) if obj % 1 == 0 else float(obj)
+        return super().default(obj)
+
+
 def lambda_handler(event, context):
     """List active VPCs or get a single VPC by ID from DynamoDB."""
-    vpc_id = event.get("pathParameters", {})
-    if vpc_id:
-        vpc_id = vpc_id.get("vpc_id")
+    path_params = event.get("pathParameters") or {}
+    vpc_id = path_params.get("vpc_id")
 
     try:
         if vpc_id:
@@ -29,10 +37,13 @@ def lambda_handler(event, context):
                 return response(404, {"error": f"VPC {vpc_id} not found"})
             return response(200, item)
         else:
-            # GET /vpcs — only return active VPCs
-            result = table.scan()
-            items = [i for i in result.get("Items", []) if i.get("status") != "DELETED"]
-            return response(200, {"vpcs": items})
+            # GET /vpcs — only return ACTIVE VPCs
+            result = table.scan(
+                FilterExpression="#s = :active",
+                ExpressionAttributeNames={"#s": "status"},
+                ExpressionAttributeValues={":active": "ACTIVE"}
+            )
+            return response(200, {"vpcs": result.get("Items", [])})
 
     except Exception as e:
         logger.error(f"Error fetching VPCs: {str(e)}")
@@ -44,5 +55,5 @@ def response(status_code, body):
     return {
         "statusCode": status_code,
         "headers": {"Content-Type": "application/json"},
-        "body": json.dumps(body)
+        "body": json.dumps(body, cls=DecimalEncoder)
     }
