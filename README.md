@@ -162,7 +162,7 @@ The `bruno/` folder contains a [Bruno](https://www.usebruno.com/) API collection
 │   ├── dev.tfvars            # Environment-specific values
 │   └── state-backend/        # Bootstrap config for remote state
 │       └── main.tf
-├── src/
+├── src/                        # Lambda function handlers (Python 3.12)
 │   ├── create/
 │   │   └── create_vpc.py     # POST /vpcs
 │   ├── get/
